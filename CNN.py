@@ -11,12 +11,13 @@ import net
 
 dset_name = 'caltech'
 dataset = cfg.DSETS[dset_name]
-model_name = 'densenet121' # 'resnet18'  # 'densenet121']
+model_name = 'resnet18'
+# model_name = 'densenet121'
 data_dir = osp.join(cfg.DATA_DIR, dset_name)
 feature_dir = osp.join(data_dir, cfg.FEATURE_DIR)
 label_dir = osp.join(data_dir, cfg.LABEL_DIR)
 net_dir = osp.join(data_dir, cfg.NET_DIR)
-epochs = 1
+epochs = 10
 batch_size = 8
 ind = 0
 tr_perc = 0.02
@@ -25,11 +26,11 @@ if not osp.exists(net_dir):
     os.makedirs(net_dir)
 
 for alg in ['gtg', 'svm', 'labeled_only']:
-    train_loader = prepare_loader(osp.join(label_dir, alg, model_name, 'labels_' + str(tr_perc) + '_' + str(ind) + '.txt'),
+    train_loader = prepare_loader(osp.join(label_dir, alg, model_name, 'labels_{}_{}.txt'.format(tr_perc, ind)),
                                   '', dataset['stats'], batch_size, shuffle=True, sep=',')
 
-    test_loader = prepare_loader(osp.join(label_dir, alg, model_name, 'labels_' + str(tr_perc) + '_' + str(ind) + '.txt'),
-                                 '', dataset['stats'], batch_size, shuffle=False, sep=',')
+    test_loader = prepare_loader(osp.join(label_dir, 'test_labels_{}.txt'.format(ind)), '', dataset['stats'], batch_size,
+                                 shuffle=False, sep=',')
 
     model = get_finetune_model(model_name, dataset['nr_classes'])
     criterion = nn.CrossEntropyLoss()
@@ -38,8 +39,8 @@ for alg in ['gtg', 'svm', 'labeled_only']:
     trained_net = net.train(model, model_name, train_loader, test_loader, optimizer, criterion, epochs, net_dir, ind)
 
     model.load_state_dict(torch.load(trained_net))
-    net_accuracy_gtg = net.evaluate(net, test_loader)
-    print('Accuracy: ' + str(net_accuracy_gtg))
+    net_accuracy = net.evaluate(model, test_loader)
+    print('Final accuracy: {}'.format(net_accuracy))
 
 # # do the same thing but with a linear SVM
 # svm_linear_classifier = svm.LinearSVC()
@@ -105,4 +106,4 @@ for alg in ['gtg', 'svm', 'labeled_only']:
 #         nname + "   " + ind + "   " + str(net_accuracy_gtg) + "   " + str(net_accuracy_svm) + "   " + str(
 #             net_accuracy) + "\n")
 
-print()
+# print()

@@ -18,6 +18,9 @@ def main2():
     dset = cfg.DSETS[dset_name]
     data_dir = osp.join(cfg.DATA_DIR, dset_name)
     feat_dir = osp.join(data_dir, cfg.FEATURE_DIR)
+    splitting_dir = osp.join(data_dir, cfg.SPLITTING_DIR)
+    label_dir = osp.join(data_dir, cfg.LABEL_DIR)
+
     max_iter = 25
     tr_percs = [0.02, 0.05, 0.1]
     net_models = ['densenet121', 'resnet18']
@@ -25,6 +28,11 @@ def main2():
                                                                    '_' + str(exp) + '.txt')
 
     for exp in range(cfg.NUM_EXPS):
+        with open(osp.join(splitting_dir, 'test_%d.txt' % exp), 'r') as src,\
+             open(osp.join(label_dir, 'test_labels_%d.txt' % exp), 'w') as dst:
+            for line in src:
+                dst.write(osp.join(dset['src'], line.rstrip() + ',%s\n' % line[:3]))
+
         for net_model in net_models:
             with open(osp.join(feat_dir, 'train', net_model + '_' + str(exp) + '.pickle'), 'r') as pkl:
                 net_name, labels, features, fnames = pickle.load(pkl)

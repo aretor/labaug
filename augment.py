@@ -28,10 +28,10 @@ def main2():
                                                                    '_' + str(exp) + '.txt')
 
     for exp in range(cfg.NUM_EXPS):
-        with open(osp.join(splitting_dir, 'test_%d.txt' % exp), 'r') as src,\
-             open(osp.join(label_dir, 'test_labels_%d.txt' % exp), 'w') as dst:
+        with open(osp.join(splitting_dir, 'test_{}.txt'.format(exp)), 'r') as src,\
+             open(osp.join(label_dir, 'test_labels_{}.txt'.format(exp)), 'w') as dst:
             for line in src:
-                dst.write(osp.join(dset['src'], line.rstrip() + ',%s\n' % line[:3]))
+                dst.write(osp.join(dset['src'], line.rstrip() + ',{}\n'.format(int(line[:3]) - 1)))
 
         for net_model in net_models:
             with open(osp.join(feat_dir, 'train', net_model + '_' + str(exp) + '.pickle'), 'r') as pkl:

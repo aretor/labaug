@@ -13,7 +13,7 @@ def train(net, net_type, train_loader, val_loader, optimizer, criterion, epochs,
 
     for epoch in range(epochs):
         net.train()
-        print(net_type + ' --------- ' + 'Epoch: ' + str(epoch))
+        print(net_type + ' --------- Epoch: ' + str(epoch))
         running_loss = 0.0
         for i, data in enumerate(train_loader):
             inputs, labels, _ = data

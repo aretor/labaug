@@ -4,7 +4,27 @@ from math import log
 import random
 
 
-def generate_relabeled_file(fnames, new_file, labels, sep=' ', replace_labels=False, sep_replace=None):
+def create_relabeled_file(fnames, new_file, labels, sep=' ',
+                          replace_labels=False, sep_replace=None):
+    """ Generate a file containing a labeling of a dataset. Each line of the
+        contains a path to am object and its class provided as an hard or soft
+        label.
+
+        Input:
+        fnames: iterable of the paths to the labeled object
+        new_file: name of the labeling file that will be created
+            labels: iterable containing the labels, which can be provided as
+            integers (hard labels) or ndarrays (soft labels)
+        replace_labels: if elements in fnames already contains a label and this
+            option is set to true labels will be replaced with the newly provided
+            ones.
+        sep_replace: separator to be used to separate labels from paths in case
+            replace_labels is set to True (the default is 'sep')
+
+    """
+    if len(fnames) != len(labels):
+        raise ValueError('length of filenames differs from length of labels')
+
     if replace_labels and not sep_replace:
         sep_replace = sep
 
@@ -15,7 +35,13 @@ def generate_relabeled_file(fnames, new_file, labels, sep=' ', replace_labels=Fa
         for row, lab in zip(fnames, labels):
             if replace_labels:
                 row = row.split(sep_replace)[0]
-            fw.write(row + sep + str(lab) + '\n')
+
+            if labels.ndim == 1:
+                fw.write(row + sep + str(lab) + '\n')
+            else:
+                fw.write(row + sep)
+                np.savetxt(fw, lab)
+                fw.write('\n')
 
     if isinstance(fnames, file):
         fnames.close()
@@ -39,7 +65,7 @@ def create_mapping(nr_objects, percentage_labels):
     return np.sort(labelled), np.sort(unlabelled)
 
 
-def create_equiclass_mapping(labels, label_perc):
+def equiclass_mapping(labels, label_perc):
     nr_classes = int(labels.max() + 1)
 
     labeled, unlabeled = [], []
@@ -52,7 +78,7 @@ def create_equiclass_mapping(labels, label_perc):
     return np.array(labeled), np.array(unlabeled)
 
 
-def gen_init_rand_probability(labels, labeled, unlabeled):
+def init_rand_probability(labels, labeled, unlabeled):
     nr_classes = int(labels.max() + 1)
     labels_one_hot = np.zeros((labels.shape[0], nr_classes))
     labels_one_hot[labeled, labels[labeled].ravel().astype(int)] = 1.0

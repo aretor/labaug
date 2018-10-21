@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import torch
 import torch.utils.data
 import torch.nn as nn
@@ -18,7 +19,7 @@ def one_hot(labels, number_of_classes):
     return label_one_hot
 
 
-def extract_features_train(net, train_loader, dense=False):
+def extract_features_train(net, train_loader, model_name):
     net.eval()
     layers = list(net.children())
     net = nn.Sequential(*layers[:-1])
@@ -27,11 +28,11 @@ def extract_features_train(net, train_loader, dense=False):
     labels_ = torch.zeros(len(train_loader), 1)
     fnames = []
 
-    for k, data in enumerate(train_loader):
+    for k, data in tqdm(enumerate(train_loader), total=len(train_loader)):
         inputs, labels, path = data
         inputs, labels = torch.autograd.Variable(inputs).cuda(), torch.autograd.Variable(labels).cuda()
         outputs = F.relu(net(inputs))
-        if dense:
+        if 'densenet' in model_name:
             outputs = torch.squeeze(F.avg_pool2d(outputs, 7))
         features[k, :] = outputs.data
         labels_[k, :] = labels.data

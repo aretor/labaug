@@ -41,4 +41,5 @@ SPLITTING_DIR = 'splittings'
 FEATURE_DIR = 'features'
 NET_DIR = 'nets'
 LABEL_DIR = 'labels'
+RESULT_DIR = 'results'
 NUM_EXPS = 1

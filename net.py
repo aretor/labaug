@@ -1,21 +1,28 @@
+import sys
 import os.path as osp
+from tqdm import tqdm
 import torch
 from torch.autograd import Variable
+from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
 
-def train(net, net_type, train_loader, val_loader, optimizer, criterion, epochs, out_dir, ind):
+def train(net, net_type, train_loader, val_loader, optimizer, criterion, epochs, out_dir, ind=None):
     net.train()
-    net_name = osp.join(out_dir, net_type + '_{}.pth'.format(ind))
+    if ind is not None:
+        net_name = osp.join(out_dir, '{}_{}.pth'.format(net_type, ind))
+    else:
+        net_name = osp.join(out_dir, net_type + '.pth')
 
     print("Validating results in: start")
-    new_accuracy = evaluate(net, val_loader)
-    print(new_accuracy)
+    sys.stdout.flush()
+    accuracy = evaluate(net, val_loader)[0]
+    print(accuracy)
 
     for epoch in range(epochs):
         net.train()
-        print(net_type + ' --------- Epoch: ' + str(epoch))
+        print('{} --------- Epoch: {}'.format(net_type, epoch))
         running_loss = 0.0
-        for i, data in enumerate(train_loader):
+        for i, data in tqdm(enumerate(train_loader), total=len(train_loader)):
             inputs, labels, _ = data
             inputs, labels = Variable(inputs).cuda(), Variable(labels).cuda()
             optimizer.zero_grad()
@@ -28,13 +35,11 @@ def train(net, net_type, train_loader, val_loader, optimizer, criterion, epochs,
 
             # print statistics
             running_loss += loss.data[0]
-            if i == 10:  # print stats after 10 mini batches for each epoch
-                print('[%d, %5d] loss: %.16f' % (epoch + 1, i + 1, running_loss / 10.0))
-            running_loss = 0.0
-
+        print('[%d] loss: %.16f' % (epoch + 1, running_loss / len(train_loader)))
         print("Validating results in: {}-th epoch".format(epoch))
-        new_accuracy = evaluate(net, val_loader)
-        print(new_accuracy)
+        sys.stdout.flush()
+        accuracy = evaluate(net, val_loader)[0]
+        print(accuracy)
 
         torch.save(net.state_dict(), net_name)
 
@@ -43,15 +48,25 @@ def train(net, net_type, train_loader, val_loader, optimizer, criterion, epochs,
 
 def evaluate(net, test_loader):
     net.eval()
-    correct = 0
-    total = 0
-    for data in test_loader:
-        inputs, labels, _ = data
-        inputs, labels = inputs.cuda(), labels.cuda()
-        outputs = net(torch.autograd.Variable(inputs))
-        _, predicted = torch.max(outputs.data, dim=1)
-        total += labels.size(0)
-        correct += (predicted == labels).sum()
+    correct = total = 0
 
-    accuracy = correct / float(total)
-    return accuracy
+    predictions, gts = [], []
+    for data in tqdm(test_loader, total=len(test_loader)):
+        inputs, labels, _ = data
+        inputs = Variable(inputs).cuda()
+        outputs = net(inputs)
+        _, predicted = torch.max(outputs.data, dim=1)
+        predictions.append(predicted)
+        gts.append(labels)
+
+        # total += labels.size(0)
+        # correct += (predicted == labels).sum()
+
+    predictions = torch.cat(predictions, dim=0).cpu().numpy()
+    gts = torch.cat(gts, dim=0).numpy()
+
+    accuracy = (predictions == gts).sum() / float(len(gts))
+    P, R, F1, _ = precision_recall_fscore_support(gts, predictions)
+    conf_mat = confusion_matrix(gts, predictions)
+
+    return accuracy, P, R, F1, conf_mat

@@ -40,7 +40,7 @@ def gen_tr_ts_files(dset_name, tr_frac=0.7, n=1, exts=None):
     """
 
     dset_source = osp.expanduser(cfg.DSETS[dset_name]['src'])
-    dset_target = osp.join(exp_dir, dset_name)
+    dset_target = osp.join(cfg.DATA_DIR, dset_name)
 
     if not osp.exists(dset_target):
         os.makedirs(dset_target)
@@ -49,11 +49,12 @@ def gen_tr_ts_files(dset_name, tr_frac=0.7, n=1, exts=None):
     if not osp.exists(splitting_dir):
         os.makedirs(splitting_dir)
 
-    with open(osp.join(splitting_dir, 'train.txt'), 'w') as train, \
-         open(osp.join(splitting_dir, 'test.txt'), 'w') as test:
+    with open(osp.join(splitting_dir, 'train_{}.txt'.format(n)), 'w') as train,\
+         open(osp.join(splitting_dir, 'test_{}.txt'.format(n)), 'w') as test:
         for class_dir in os.listdir(dset_source):
             fnames = os.listdir(osp.join(dset_source, class_dir))
-            fnames = [f for f in fnames if (exts is None) or (osp.splitext(f)[1] in exts)]
+            fnames = [f for f in fnames if (exts is None) or
+                                           (osp.splitext(f)[1] in exts)]
             random.shuffle(fnames)
 
             split = int(tr_frac * len(fnames))
@@ -129,7 +130,9 @@ def compute_img_dataset_stats(dataset_file, src_folder=None):
 
 
 if __name__ == '__main__':
-    random.seed(2718)
+    random.seed(314)
     dset_name = 'caltech'
-    gen_tr_ts_files(cfg.DSETS[dset_name]['src'], dset_name, tr_frac=0.7, exts=['.jpg', '.jpeg', '.png'])
+    for exp in range(cfg.NUM_EXPS):
+        gen_tr_ts_files(cfg.DSETS[dset_name]['src'], dset_name, tr_frac=0.7,
+                        n=exp, exts=['.jpg', '.jpeg', '.png'])
     # print(compute_img_dataset_stats('dataset_files/indoors/train_0.txt', 'Datasets/indoors'))

@@ -6,12 +6,15 @@ from torch.autograd import Variable
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 
 
-def train(net, net_type, train_loader, val_loader, optimizer, criterion, epochs, out_dir, ind=None):
+def train(net, net_type, train_loader, val_loader, optimizer, criterion, epochs, out_dir, ind=None, hard_labels=True):
     net.train()
     if ind is not None:
         net_name = osp.join(out_dir, '{}_{}.pth'.format(net_type, ind))
     else:
         net_name = osp.join(out_dir, net_type + '.pth')
+
+    if not hard_labels:
+        logsoftmax = torch.nn.LogSoftmax(dim=1)
 
     print("Validating results in: start")
     sys.stdout.flush()
@@ -29,6 +32,9 @@ def train(net, net_type, train_loader, val_loader, optimizer, criterion, epochs,
             outputs = net(inputs)
             if net_type == 'inception':
                 outputs = outputs[0] + outputs[1]
+
+            if not hard_labels:
+                outputs = logsoftmax(outputs)
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
@@ -48,8 +54,6 @@ def train(net, net_type, train_loader, val_loader, optimizer, criterion, epochs,
 
 def evaluate(net, test_loader):
     net.eval()
-    correct = total = 0
-
     predictions, gts = [], []
     for data in tqdm(test_loader, total=len(test_loader)):
         inputs, labels, _ = data
@@ -58,10 +62,6 @@ def evaluate(net, test_loader):
         _, predicted = torch.max(outputs.data, dim=1)
         predictions.append(predicted)
         gts.append(labels)
-
-        # total += labels.size(0)
-        # correct += (predicted == labels).sum()
-
     predictions = torch.cat(predictions, dim=0).cpu().numpy()
     gts = torch.cat(gts, dim=0).numpy()
 

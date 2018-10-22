@@ -49,7 +49,7 @@ class Experiment(object):
 
         Inputs:
         steps: the step of the experiment to be perfomed. It accept a list
-         containing one or more of these three options:
+         containing one or more of these four options:
          'splitter': to generate a splitting of a dataset in train and test
           files
          'extractor': to extract the features of the dataset
@@ -59,9 +59,6 @@ class Experiment(object):
           the accuracy
          If not set, all the steps are performed.
         seed: the seed to reproduce the experiments
-
-        Additional arguments:
-        'batch_size':
         """
         if steps is None:
             steps = ['splitter', 'extractor', 'augmenter', 'trainer']
@@ -78,11 +75,11 @@ if __name__ == '__main__':
     steps = [
              # 'splitter',
              # 'extractor',
-             # 'augmenter',
-             'trainer'
+             'augmenter',
+             # 'trainer'
     ]
 
     exp = Experiment(dset_name, net_names=['resnet18'], exp=0)
     exp.run(steps=steps, seed=314, tr_frac=0.8, exts=['.jpg', 'jpeg', '.png'],
-            tr_percs=[0.05], algs=['svm', 'labels_only'], epochs=1,
+            tr_percs=[0.02], algs=['svm', 'labels_only'], epochs=1,
             hard_labels=False)

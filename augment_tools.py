@@ -40,7 +40,7 @@ def create_relabeled_file(fnames, new_file, labels, sep=' ',
                 fw.write(row + sep + str(lab) + '\n')
             else:
                 fw.write(row + sep)
-                np.savetxt(fw, lab)
+                np.savetxt(fw, lab, newline=' ')
                 fw.write('\n')
 
     if isinstance(fnames, file):

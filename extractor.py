@@ -1,10 +1,11 @@
 import os
 import os.path as osp
 import pickle
-
+import torch
+from torch import nn
+import torch.nn.functional as F
 
 from extract_tools import get_finetune_model, prepare_loader
-from feature_extractor import extract_features_train
 
 
 class Extractor(object):
@@ -13,6 +14,30 @@ class Extractor(object):
         self.net_names = net_names
         self.splitting_dir = splitting_dir
         self.feat_dir = feat_dir
+
+    def _extract_features(self, net, loader, model_name):
+        net.eval()
+        layers = list(net.children())
+        net = nn.Sequential(*layers[:-1])
+
+        features = torch.zeros(len(loader), layers[-1].in_features)
+        labels_ = torch.zeros(len(loader), 1)
+        fnames = []
+
+        for k, data in tqdm(enumerate(loader), total=len(loader)):
+            inputs, labels, path = data
+            inputs, labels = torch.autograd.Variable(
+                inputs).cuda(), torch.autograd.Variable(labels).cuda()
+            outputs = F.relu(net(inputs))
+            if 'densenet' in model_name:
+                outputs = torch.squeeze(F.avg_pool2d(outputs, 7))
+            features[k, :] = outputs.data
+            labels_[k, :] = labels.data
+            fnames.append(path[0])
+
+        fc7_features = features.numpy()
+        labels = labels_.numpy()
+        return fc7_features, labels, net, fnames
 
     def __call__(self, *args, **kwargs):
         """ Extract the features """
@@ -28,10 +53,8 @@ class Extractor(object):
                     self.dset['src'], self.dset['stats'], batch_size, False)
 
                 fc7_features, labels, model, fnames = \
-                    extract_features_train(ft_model, set_loader, net_name)
+                    self._extract_features(ft_model, set_loader, net_name)
 
-                # store the name of the net, the dataset on which we are going
-                # to use it, and the testing accuracy
                 net_info = [net_name, labels, fc7_features, fnames]
 
                 pickle_dir = osp.join(self.feat_dir, set_)

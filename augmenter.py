@@ -1,14 +1,76 @@
 import os
 import os.path as osp
+import random
 import pickle
 import numpy as np
 from sklearn import svm
 from sklearn.calibration import CalibratedClassifierCV
 
-
 import gtg
-from augment_tools import equiclass_mapping, init_rand_probability, \
-    create_relabeled_file
+
+
+def equiclass_mapping(labels, label_perc):
+    nr_classes = int(labels.max() + 1)
+
+    labeled, unlabeled = [], []
+    for n_class in xrange(nr_classes):
+        class_labels = list(np.where(labels == n_class)[0])
+        split = int(label_perc * len(class_labels))
+        random.shuffle(class_labels)
+        labeled += class_labels[:split]
+        unlabeled += class_labels[split:]
+    return np.array(labeled), np.array(unlabeled)
+
+
+def init_rand_probability(labels, labeled, unlabeled):
+    nr_classes = int(labels.max() + 1)
+    labels_one_hot = np.zeros((labels.shape[0], nr_classes))
+    labels_one_hot[labeled, labels[labeled].ravel().astype(int)] = 1.0
+    labels_one_hot[unlabeled, :] = np.full((1, nr_classes), 1.0 / nr_classes)
+    return labels_one_hot
+
+
+def create_relabeled_file(fnames, new_file, labels, sep=' ',
+                          replace_labels=False, sep_replace=None):
+    """ Generate a file containing a labeling of a dataset. Each line of the
+        contains a path to am object and its class provided as an hard or soft
+        label.
+
+        Input:
+        fnames: iterable of the paths to the labeled object
+        new_file: name of the labeling file that will be created
+            labels: iterable containing the labels, which can be provided as
+            integers (hard labels) or ndarrays (soft labels)
+        replace_labels: if elements in fnames already contains a label and this
+            option is set to true labels will be replaced with the newly provided
+            ones.
+        sep_replace: separator to be used to separate labels from paths in case
+            replace_labels is set to True (the default is 'sep')
+
+    """
+    if len(fnames) != len(labels):
+        raise ValueError('length of filenames differs from length of labels')
+
+    if replace_labels and not sep_replace:
+        sep_replace = sep
+
+    if isinstance(fnames, file):
+        fnames = list(fnames.open('r'))
+
+    with open(new_file, 'w') as fw:
+        for row, lab in zip(fnames, labels):
+            if replace_labels:
+                row = row.split(sep_replace)[0]
+
+            if labels.ndim == 1:
+                fw.write(row + sep + str(lab) + '\n')
+            else:
+                fw.write(row + sep)
+                np.savetxt(fw, lab, newline=' ')
+                fw.write('\n')
+
+    if isinstance(fnames, file):
+        fnames.close()
 
 
 class Augmenter(object):
@@ -40,7 +102,7 @@ class Augmenter(object):
                 net_name, labels, features, fnames = pickle.load(pkl)
                 labels = labels.ravel()
 
-                # uncomment to fa debug code
+                # uncomment to debug code
                 # labels = labels[:5000]
                 # features = features[:5000]
                 # fnames = fnames[:5000]
@@ -86,8 +148,11 @@ class Augmenter(object):
                             lin_svm.fit(features[labeled, :], labels[labeled])
                             svm_labels = lin_svm.predict(features[unlabeled]).astype(int)
                         else:
-                            clf = CalibratedClassifierCV(lin_svm)
+                            cv = min(np.unique(labels[labeled],
+                                               return_counts=True)[1].min(), 3)
+                            clf = CalibratedClassifierCV(lin_svm, cv=cv)
                             clf.fit(features[labeled, :], labels[labeled])
+
                             svm_labels = clf.predict_proba(
                                 features[unlabeled])
 

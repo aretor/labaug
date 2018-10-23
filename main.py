@@ -20,12 +20,12 @@ class Experiment(object):
         self.exp_dir = osp.join(cfg.DATA_DIR, 'exp_' + str(exp))
         self.num_exp = exp
 
-        self.splitting_dir = osp.join(self.exp_dir, dset_name,
-                                      cfg.SPLITTING_DIR)
-        self.feat_dir = osp.join(self.exp_dir, dset_name, cfg.FEATURE_DIR)
-        self.label_dir = osp.join(self.exp_dir, dset_name, cfg.LABEL_DIR)
-        self.net_dir = osp.join(self.exp_dir, cfg.NET_DIR)
-        self.res_dir = osp.join(self.exp_dir, cfg.RESULT_DIR)
+        dset_dir = osp.join(self.exp_dir, dset_name)
+        self.splitting_dir = osp.join(dset_dir, cfg.SPLITTING_DIR)
+        self.feat_dir = osp.join(dset_dir, cfg.FEATURE_DIR)
+        self.label_dir = osp.join(dset_dir, cfg.LABEL_DIR)
+        self.net_dir = osp.join(dset_dir, cfg.NET_DIR)
+        self.res_dir = osp.join(dset_dir, cfg.RESULT_DIR)
 
         self.dset = cfg.DSETS[dset_name]
 
@@ -76,6 +76,6 @@ if __name__ == '__main__':
              'trainer'
     ]
 
-    exp = Experiment(dset_name, net_names=['resnet18'], hard_labels=True, exp=1)
+    exp = Experiment(dset_name, net_names=['resnet18'], hard_labels=True, device='cuda:0', exp=1)
     exp.run(steps=steps, seed=314, tr_frac=0.8, exts=['.jpg', 'jpeg', '.png'],
-            tr_percs=[0.05], algs=['gtg', 'svm', 'labels_only'], epochs=1)
+            tr_percs=[0.05], algs=['gtg', 'svm', 'labels_only'], epochs=10)

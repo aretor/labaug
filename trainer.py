@@ -41,14 +41,15 @@ class Trainer(object):
         self.test_loader = prepare_loader(ts_lab_path, '', self.dset['stats'], batch_size, shuffle=False,
                                           sep=',', hard_labels=self.hard_labels)
 
-        print("Validating results in: start")
+        print("\nValidating results in: start")
         sys.stdout.flush()
         accuracy = self.evaluate(net)[0]
-        print(accuracy)
+        sys.stderr.flush()
+        print('Accuracy: %f' % accuracy)
 
         for epoch in range(epochs):
             net.train()
-            print('{} --------- Epoch: {}'.format(net_type, epoch))
+            print('\n{} --------- Epoch: {}'.format(net_type, epoch))
             running_loss = 0.0
             for i, data in tqdm(enumerate(self.train_loader), total=len(self.train_loader)):
                 inputs, labels, _ = data
@@ -71,6 +72,7 @@ class Trainer(object):
             print("Validating results in: %d-th epoch" % epoch)
             sys.stdout.flush()
             accuracy = self.evaluate(net)[0]
+            sys.stderr.flush()
             print("Accuracy: %f" % accuracy)
 
             torch.save(net.state_dict(), net_name)

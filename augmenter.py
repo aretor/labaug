@@ -74,17 +74,26 @@ def create_relabeled_file(fnames, new_file, labels, sep=' ',
 
 
 class Augmenter(object):
-    def __init__(self, dset, splitting_dir, feat_dir, label_dir, net_names):
+    """ Class to augment the labels of a dataset by propagating information of labeled observations to unlabeled ones
+    """
+    def __init__(self, dset, splitting_dir, feat_dir, label_dir, net_names, hard_labels):
         self.dset = dset
         self.net_names = net_names
         self.splitting_dir = splitting_dir
         self.feat_dir = feat_dir
         self.label_dir = label_dir
+        self.hard_labels = hard_labels
 
     def __call__(self, *args, **kwargs):
+        """ Augment the labels
+
+            Inputs:
+            tr_percs: percentage of splitting between labeled and unlabeled observations
+            algs: methods to perform the label propagation
+            max_iter: parameter for 'gtg': number of iterations
+        """
         tr_percs = kwargs.pop('tr_percs', [0.02, 0.05, 0.1])
         algs = kwargs.pop('algs', ['gtg', 'svm', 'labels_only'])
-        hard_labels = kwargs.pop('hard_labels', True)
         max_iter = kwargs.pop('max_iter', 25)
 
         if not osp.exists(self.label_dir):
@@ -110,14 +119,13 @@ class Augmenter(object):
             for tr_perc in tr_percs:
                 labeled, unlabeled = equiclass_mapping(labels, tr_perc)
                 for alg in algs:
-                    print(net_name + ' - ' + str(self.dset['nr_classes']) +
-                          ' classes')
+                    print(net_name + ' - ' + str(self.dset['nr_classes']) + ' classes')
 
                     # generate alg label file name
                     alg_path = osp.join(self.label_dir, alg, net_name,
                                         'labels_{}.txt'.format(tr_perc))
 
-                    if hard_labels:
+                    if self.hard_labels:
                         alg_labels = np.full(labels.shape[0], -1)
                         alg_labels[labeled] = labels[labeled]
                     else:
@@ -135,7 +143,7 @@ class Augmenter(object):
                         res = gtg.gtg(W, ps, max_iter=max_iter, labels=labels,
                                       U=unlabeled, L=labeled)
 
-                        if hard_labels:
+                        if self.hard_labels:
                             alg_labels[unlabeled] = res[unlabeled].argmax(axis=1)
                         else:
                             alg_labels[unlabeled] = res[unlabeled]
@@ -144,7 +152,7 @@ class Augmenter(object):
                         # predict labels with a linear SVM
                         lin_svm = svm.LinearSVC()
 
-                        if hard_labels:
+                        if self.hard_labels:
                             lin_svm.fit(features[labeled, :], labels[labeled])
                             svm_labels = lin_svm.predict(features[unlabeled]).astype(int)
                         else:
@@ -165,8 +173,8 @@ class Augmenter(object):
                         if not osp.exists(osp.dirname(alg_path)):
                             os.makedirs(osp.dirname(alg_path))
 
-                        if (hard_labels and (alg_labels == -1).sum() > 0) or \
-                                (not hard_labels and (alg_labels.sum(
+                        if (self.hard_labels and (alg_labels == -1).sum() > 0) or \
+                                (not self.hard_labels and (alg_labels.sum(
                                     axis=1) == 0.).sum() > 0):
                             raise ValueError(
                                 'There is some unlabeled observation,'
@@ -181,8 +189,8 @@ class Augmenter(object):
                     if not osp.exists(osp.dirname(alg_path)):
                         os.makedirs(osp.dirname(alg_path))
 
-                    if (hard_labels and (alg_labels == -1).sum() > 0) or\
-                        (not hard_labels and (alg_labels.sum(axis=1) == 0.).sum() > 0):
+                    if (self.hard_labels and (alg_labels == -1).sum() > 0) or\
+                        (not self.hard_labels and (alg_labels.sum(axis=1) == 0.).sum() > 0):
                         raise ValueError('There is some unlabeled observation,'
                                          'check \'' + alg + '\' algorithm,')
 

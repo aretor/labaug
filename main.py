@@ -11,7 +11,7 @@ from trainer import Trainer
 
 
 class Experiment(object):
-    def __init__(self, dset_name, net_names, exp=None):
+    def __init__(self, dset_name, net_names, hard_labels, exp=None):
         if exp is None:
             exp = 0
             while osp.exists(osp.join(cfg.DATA_DIR, 'exp_' + str(exp))):
@@ -33,9 +33,9 @@ class Experiment(object):
         self.extractor = Extractor(self.dset, self.splitting_dir, self.feat_dir,
                                    net_names)
         self.augmenter = Augmenter(self.dset, self.splitting_dir, self.feat_dir,
-                                   self.label_dir, net_names)
+                                   self.label_dir, net_names, hard_labels)
         self.trainer = Trainer(self.dset, self.label_dir, self.net_dir,
-                               self.res_dir, net_names)
+                               self.res_dir, net_names, hard_labels)
 
     def _set_seeds(self, seed=None):
         random.seed(seed)
@@ -73,13 +73,12 @@ class Experiment(object):
 if __name__ == '__main__':
     dset_name = 'caltech'
     steps = [
-             # 'splitter',
-             # 'extractor',
+             'splitter',
+             'extractor',
              'augmenter',
-             # 'trainer'
+             'trainer'
     ]
 
-    exp = Experiment(dset_name, net_names=['resnet18'], exp=0)
+    exp = Experiment(dset_name, net_names=['resnet18'], hard_labels=True, exp=1)
     exp.run(steps=steps, seed=314, tr_frac=0.8, exts=['.jpg', 'jpeg', '.png'],
-            tr_percs=[0.02], algs=['svm', 'labels_only'], epochs=1,
-            hard_labels=False)
+            tr_percs=[0.05], algs=['gtg', 'svm', 'labels_only'], epochs=1)

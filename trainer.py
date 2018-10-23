@@ -7,19 +7,19 @@ from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.autograd import Variable
 
 from extract_tools import get_finetune_model, prepare_loader
 
 
 class Trainer(object):
-    def __init__(self, dset, label_dir, net_dir, res_dir, net_names, hard_labels):
+    def __init__(self, dset, label_dir, net_dir, res_dir, net_names, hard_labels, device):
         self.dset = dset
         self.net_names = net_names
         self.label_dir = label_dir
         self.net_dir = net_dir
         self.res_dir = res_dir
         self.hard_labels = hard_labels
+        self.device = device
 
         self.train_loader = None
         self.test_loader = None
@@ -52,7 +52,7 @@ class Trainer(object):
             running_loss = 0.0
             for i, data in tqdm(enumerate(self.train_loader), total=len(self.train_loader)):
                 inputs, labels, _ = data
-                inputs, labels = Variable(inputs).cuda(), Variable(labels).cuda()
+                inputs, labels = inputs.to(self.device), labels.to(self.device)
                 optimizer.zero_grad()
                 outputs = net(inputs)
                 if net_type == 'inception':
@@ -67,7 +67,7 @@ class Trainer(object):
                 # print statistics
                 running_loss += loss.data[0]
             sys.stderr.flush()
-            print('[%d] loss: %.16f' % (epoch + 1, running_loss / len(self.train_loader)))
+            print('\n[%d] loss: %.16f' % (epoch, running_loss / len(self.train_loader)))
             print("Validating results in: %d-th epoch" % epoch)
             sys.stdout.flush()
             accuracy = self.evaluate(net)[0]
@@ -82,7 +82,7 @@ class Trainer(object):
         predictions, gts = [], []
         for data in tqdm(self.test_loader, total=len(self.test_loader)):
             inputs, labels, _ = data
-            inputs = Variable(inputs).cuda()
+            inputs = inputs.to(self.device)
             outputs = net(inputs)
             _, predicted = torch.max(outputs.data, dim=1)
             predictions.append(predicted)
@@ -115,7 +115,7 @@ class Trainer(object):
                 for alg in algs:
                     lab_path = osp.join(self.label_dir, alg, net_name, 'labels_{}.txt'.format(tr_perc))
 
-                    model = get_finetune_model(net_name, self.dset['nr_classes'])
+                    model = get_finetune_model(net_name, self.dset['nr_classes']).cuda()
                     trained_net = self.train(model, net_name, lab_path, epochs, lr=lr, batch_size=batch_size)
 
                     model.load_state_dict(torch.load(trained_net))

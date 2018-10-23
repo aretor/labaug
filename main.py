@@ -11,7 +11,7 @@ from trainer import Trainer
 
 
 class Experiment(object):
-    def __init__(self, dset_name, net_names, hard_labels, exp=None):
+    def __init__(self, dset_name, net_names, hard_labels, device, exp=None):
         if exp is None:
             exp = 0
             while osp.exists(osp.join(cfg.DATA_DIR, 'exp_' + str(exp))):
@@ -30,12 +30,9 @@ class Experiment(object):
         self.dset = cfg.DSETS[dset_name]
 
         self.splitter = Splitter(self.dset, self.splitting_dir)
-        self.extractor = Extractor(self.dset, self.splitting_dir, self.feat_dir,
-                                   net_names)
-        self.augmenter = Augmenter(self.dset, self.splitting_dir, self.feat_dir,
-                                   self.label_dir, net_names, hard_labels)
-        self.trainer = Trainer(self.dset, self.label_dir, self.net_dir,
-                               self.res_dir, net_names, hard_labels)
+        self.extractor = Extractor(self.dset, self.splitting_dir, self.feat_dir, net_names, device)
+        self.augmenter = Augmenter(self.dset, self.splitting_dir, self.feat_dir, self.label_dir, net_names, hard_labels)
+        self.trainer = Trainer(self.dset, self.label_dir, self.net_dir, self.res_dir, net_names, hard_labels, device)
 
     def _set_seeds(self, seed=None):
         random.seed(seed)

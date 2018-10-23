@@ -37,9 +37,9 @@ class FileImageFolder(torchvision.datasets.ImageFolder):
         if hard_labels:
             self.class_to_idx = {class_: idx for idx, class_ in enumerate(sorted(set(self.classes)))}
             self.idx_to_class = {class_: self.class_to_idx[class_] for class_ in self.class_to_idx.keys()}
-            self.imgs = list(zip(paths, [self.class_to_idx[class_] for class_ in self.classes]))
+            self.samples = list(zip(paths, [self.class_to_idx[class_] for class_ in self.classes]))
         else:
-            self.imgs = list(zip(paths, self.classes))
+            self.samples = list(zip(paths, self.classes))
 
         self.transform = transform
         self.target_transform = target_transform
@@ -49,5 +49,5 @@ class FileImageFolder(torchvision.datasets.ImageFolder):
 
     def __getitem__(self, index):
         img, target = super(FileImageFolder, self).__getitem__(index)
-        path = self.imgs[index][0]
+        path = self.samples[index][0]
         return img, target, path

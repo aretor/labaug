@@ -14,7 +14,7 @@ def get_finetune_model(net, nr_classes):
     elif 'densenet' in net:
         model.classifier = nn.Linear(model.classifier.in_features, nr_classes)
 
-    return model.cuda()
+    return model
 
 
 # TODO: change collate_fn to work correctly with FileImageFolder (the path is returned as a list instead of str)

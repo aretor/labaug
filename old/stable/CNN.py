@@ -6,7 +6,7 @@ import torch.optim as optim
 
 import config as cfg
 from extract_tools import prepare_loader, get_finetune_model
-import net
+from old.stable import net
 
 dset_name = 'caltech'
 dataset = cfg.DSETS[dset_name]

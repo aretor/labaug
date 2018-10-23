@@ -2,6 +2,7 @@ import os
 import os.path as osp
 import pickle
 import torch
+from tqdm import tqdm
 from torch import nn
 import torch.nn.functional as F
 
@@ -9,6 +10,9 @@ from extract_tools import get_finetune_model, prepare_loader
 
 
 class Extractor(object):
+    """ Class to extract the features from images of a dataset using NN specified by the user
+        currently only ResNet and DenseNet are supported.
+    """
     def __init__(self, dset, splitting_dir, feat_dir, net_names):
         self.dset = dset
         self.net_names = net_names
@@ -40,7 +44,11 @@ class Extractor(object):
         return fc7_features, labels, net, fnames
 
     def __call__(self, *args, **kwargs):
-        """ Extract the features """
+        """ Extract the features
+
+            Inputs:
+            batch_size_fe: the batch size (default: 1)
+        """
         batch_size = kwargs.pop('batch_size_fe', 1)
 
         for set_ in ('train', 'test'):
@@ -61,6 +69,5 @@ class Extractor(object):
                 if not osp.exists(pickle_dir):
                     os.makedirs(pickle_dir)
 
-                with open(osp.join(pickle_dir, net_name + '.pickle'), 'wb')\
-                        as f:
+                with open(osp.join(pickle_dir, net_name + '.pickle'), 'wb') as f:
                     pickle.dump(net_info, f, pickle.HIGHEST_PROTOCOL)

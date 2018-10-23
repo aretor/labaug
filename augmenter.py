@@ -13,7 +13,7 @@ def equiclass_mapping(labels, label_perc):
     nr_classes = int(labels.max() + 1)
 
     labeled, unlabeled = [], []
-    for n_class in xrange(nr_classes):
+    for n_class in range(nr_classes):
         class_labels = list(np.where(labels == n_class)[0])
         split = int(label_perc * len(class_labels))
         random.shuffle(class_labels)
@@ -102,12 +102,10 @@ class Augmenter(object):
         with open(osp.join(self.splitting_dir, 'test.txt'), 'r') as src,\
              open(osp.join(self.label_dir, 'test_labels.txt'), 'w') as dst:
             for line in src:
-                dst.write(osp.join(self.dset['src'], line.rstrip() +
-                                   ',' + str(int(line[:3]) - 1)) + '\n')
+                dst.write(osp.join(self.dset['src'], line.rstrip() + ',' + str(int(line[:3]) - 1)) + '\n')
 
         for net_name in self.net_names:
-            with open(osp.join(self.feat_dir, 'train', net_name + '.pickle'),
-                      'r') as pkl:
+            with open(osp.join(self.feat_dir, 'train', net_name + '.pickle'), 'r') as pkl:
                 net_name, labels, features, fnames = pickle.load(pkl)
                 labels = labels.ravel()
 

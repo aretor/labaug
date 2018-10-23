@@ -69,7 +69,7 @@ def equiclass_mapping(labels, label_perc):
     nr_classes = int(labels.max() + 1)
 
     labeled, unlabeled = [], []
-    for n_class in xrange(nr_classes):
+    for n_class in range(nr_classes):
         class_labels = list(np.where(labels == n_class)[0])
         split = int(label_perc * len(class_labels))
         random.shuffle(class_labels)
@@ -117,7 +117,7 @@ def get_accuracy(P, labels, unlabeled):
 
 def gen_gtg_label_file(fnames, names_folds, labels_GT, out_fname):
     with open(out_fname, 'w') as file:
-        for i in xrange(len(fnames)):
+        for i in range(len(fnames)):
             splitted_name = fnames[i][0].split('/')
             new_name = splitted_name[8] + '/' + splitted_name[9] + ' ' + names_folds[labels_GT[i]] + "\n"
             file.write(new_name)
@@ -125,7 +125,7 @@ def gen_gtg_label_file(fnames, names_folds, labels_GT, out_fname):
 
 # file = open('only_labelled.txt', 'w')
 # # and here we create a similar file just for the labelled data
-# for i in xrange(len(names_of_files)):
+# for i in range(len(names_of_files)):
 #     splitted_name = names_of_files[i][0].split('/')
 #     if i in labelled:
 #         new_name = splitted_name[8] + '/' + splitted_name[9] + ' ' + splitted_name[8] + "\n"

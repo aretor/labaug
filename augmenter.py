@@ -54,9 +54,6 @@ def create_relabeled_file(fnames, new_file, labels, sep=' ', replace_labels=Fals
     if replace_labels and not sep_replace:
         sep_replace = sep
 
-    if osp.isfile(fnames):
-        fnames = list(fnames.open('r'))
-
     with open(new_file, 'w') as fw:
         for row, lab in zip(fnames, labels):
             if replace_labels:
@@ -68,9 +65,6 @@ def create_relabeled_file(fnames, new_file, labels, sep=' ', replace_labels=Fals
                 fw.write(row + sep)
                 np.savetxt(fw, lab, newline=' ')
                 fw.write('\n')
-
-    if osp.isfile(fnames):
-        fnames.close()
 
 
 class Augmenter(object):
@@ -104,10 +98,10 @@ class Augmenter(object):
                                     stats=self.dset['stats'], batch_size=1, shuffle=False,)
 
             for _, label, path in loader:
-                dst.write(osp.join(self.dset['src'], path[0] + ',' + str(label.item()) + '\n'))
+                dst.write(osp.join(path[0] + ',' + str(label.item()) + '\n'))
 
         for net_name in self.net_names:
-            with open(osp.join(self.feat_dir, 'train', net_name + '.pickle'), 'r') as pkl:
+            with open(osp.join(self.feat_dir, 'train', net_name + '.pickle'), 'rb') as pkl:
                 net_name, labels, features, fnames = pickle.load(pkl)
                 labels = labels.ravel()
 

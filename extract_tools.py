@@ -18,8 +18,7 @@ def get_finetune_model(net, nr_classes):
 
 
 # TODO: change collate_fn to work correctly with FileImageFolder (the path is returned as a list instead of str)
-def prepare_loader(dataset_path, img_root, stats, batch_size, shuffle, sep='',
-                   hard_labels=True):
+def prepare_loader(dataset_path, img_root, stats, batch_size, shuffle, sep='', hard_labels=True):
     transform = torchvision.transforms.Compose([
         torchvision.transforms.Resize(256),
         torchvision.transforms.CenterCrop(224),
@@ -33,10 +32,8 @@ def prepare_loader(dataset_path, img_root, stats, batch_size, shuffle, sep='',
     else:
         target_transform = None
 
-    val = FileImageFolder(dataset_path, root=img_root, transform=transform,
-                          sep=sep, hard_labels=hard_labels,
+    fif = FileImageFolder(dataset_path, root=img_root, transform=transform, sep=sep, hard_labels=hard_labels,
                           target_transform=target_transform)
-    val_loader = torch.utils.data.DataLoader(val, batch_size=batch_size,
-                                             shuffle=shuffle, num_workers=12,
+    loader = torch.utils.data.DataLoader(fif, batch_size=batch_size, shuffle=shuffle, num_workers=12,
                                              pin_memory=True)
-    return val_loader
+    return loader

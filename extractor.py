@@ -1,3 +1,4 @@
+import sys
 import os
 import os.path as osp
 import pickle
@@ -29,7 +30,7 @@ class Extractor(object):
         labels_ = torch.zeros(len(loader), 1)
         fnames = []
 
-        for k, data in tqdm(enumerate(loader), total=len(loader)):
+        for k, data in tqdm(enumerate(loader), total=len(loader), file=sys.stdout):
             inputs, labels, path = data
             inputs, labels = inputs.to(self.device), labels.to(self.device)
             outputs = F.relu(net(inputs))

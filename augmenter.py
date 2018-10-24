@@ -7,6 +7,7 @@ from sklearn import svm
 from sklearn.calibration import CalibratedClassifierCV
 
 import gtg
+from extract_tools import prepare_loader
 
 
 def equiclass_mapping(labels, label_perc):
@@ -99,10 +100,12 @@ class Augmenter(object):
         if not osp.exists(self.label_dir):
             os.makedirs(self.label_dir)
 
-        with open(osp.join(self.splitting_dir, 'test.txt'), 'r') as src,\
-             open(osp.join(self.label_dir, 'test_labels.txt'), 'w') as dst:
-            for line in src:
-                dst.write(osp.join(self.dset['src'], line.rstrip() + ',' + str(int(line[:3]) - 1)) + '\n')
+        with open(osp.join(self.label_dir, 'test_labels.txt'), 'w') as dst:
+            loader = prepare_loader(osp.join(self.splitting_dir, 'test.txt'), img_root=self.dset['src'],
+                                    stats=self.dset['stats'], batch_size=1, shuffle=False,)
+
+            for _, label, path in loader:
+                dst.write(osp.join(self.dset['src'], path[0] + ',' + str(label.item()) + '\n'))
 
         for net_name in self.net_names:
             with open(osp.join(self.feat_dir, 'train', net_name + '.pickle'), 'r') as pkl:

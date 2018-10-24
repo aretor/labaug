@@ -41,17 +41,17 @@ class Trainer(object):
         self.test_loader = prepare_loader(ts_lab_path, '', self.dset['stats'], batch_size, shuffle=False,
                                           sep=',', hard_labels=True)
 
-        print("\nValidating results in: start")
         sys.stdout.flush()
         accuracy = self.evaluate(net)[0]
         sys.stderr.flush()
-        print('Accuracy: %f' % accuracy)
+        print('Accuracy: %f' % mean_acc)
 
         for epoch in range(epochs):
             net.train()
-            print('\n{} --------- Epoch: {}'.format(net_type, epoch))
+            print('\n{} --------- Epoch: {}'.format(net_type, epoch + 1))
             running_loss = 0.0
-            for i, data in tqdm(enumerate(self.train_loader), total=len(self.train_loader)):
+            for i, data in tqdm(enumerate(self.train_loader), total=len(self.train_loader), file=sys.stdout,
+                                desc='Training'):
                 inputs, labels, _ = data
                 inputs, labels = inputs.to(self.device), labels.to(self.device)
                 optimizer.zero_grad()
@@ -68,12 +68,11 @@ class Trainer(object):
                 # print statistics
                 running_loss += loss.data[0]
             sys.stderr.flush()
-            print('\n[%d] loss: %.16f' % (epoch, running_loss / len(self.train_loader)))
-            print("Validating results in: %d-th epoch" % epoch)
+            print('Loss: %.16f' % (running_loss / len(self.train_loader)))
             sys.stdout.flush()
             accuracy = self.evaluate(net)[0]
             sys.stderr.flush()
-            print("Accuracy: %f" % accuracy)
+            print("Accuracy: %f" % mean_acc)
 
             torch.save(net.state_dict(), net_name)
 
@@ -82,7 +81,7 @@ class Trainer(object):
     def evaluate(self, net):
         net.eval()
         predictions, gts = [], []
-        for data in tqdm(self.test_loader, total=len(self.test_loader)):
+        for data in tqdm(self.test_loader, total=len(self.test_loader), file=sys.stdout, desc='Validating'):
             inputs, labels, _ = data
             inputs = inputs.to(self.device)
             outputs = net(inputs)
@@ -115,6 +114,7 @@ class Trainer(object):
 
             for tr_perc in tr_percs:
                 for alg in algs:
+                    print('\n\n{}% originally labeled, {}'.format(tr_perc * 100, alg))
                     lab_path = osp.join(self.label_dir, alg, net_name, 'labels_{}.txt'.format(tr_perc))
 
                     model = get_finetune_model(net_name, self.dset['nr_classes']).cuda()

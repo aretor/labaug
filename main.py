@@ -70,12 +70,15 @@ class Experiment(object):
 if __name__ == '__main__':
     dset_name = 'caltech'
     steps = [
-             'splitter',
-             'extractor',
-             'augmenter',
+             # 'splitter',
+             # 'extractor',
+             # 'augmenter',
              'trainer'
     ]
 
-    exp = Experiment(dset_name, net_names=['resnet18'], hard_labels=True, device='cuda:0', exp=1)
+    exp = Experiment(dset_name, net_names=['resnet18'], hard_labels=False, exp=2, device='cuda:0')
     exp.run(steps=steps, seed=314, tr_frac=0.8, exts=['.jpg', 'jpeg', '.png'],
-            tr_percs=[0.05], algs=['gtg', 'svm', 'labels_only'], epochs=10)
+            tr_percs=[0.05], algs=['svm'], epochs=10, batch_size_tr=64)
+    # exp = Experiment(dset_name, net_names=['resnet18'], hard_labels=True, device='cuda:0', exp=1)
+    # exp.run(steps=steps, seed=314, tr_frac=0.8, exts=['.jpg', 'jpeg', '.png'],
+    #         tr_percs=[0.05], algs=['gtg', 'svm', 'labels_only'], epochs=10, batch_size_tr=64,)

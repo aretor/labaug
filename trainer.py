@@ -42,7 +42,7 @@ class Trainer(object):
                                           sep=',', hard_labels=True)
 
         sys.stdout.flush()
-        accuracy = self.evaluate(net)[0]
+        mean_acc = self.evaluate(net)[0]
         sys.stderr.flush()
         print('Accuracy: %f' % mean_acc)
 
@@ -66,11 +66,11 @@ class Trainer(object):
                 optimizer.step()
 
                 # print statistics
-                running_loss += loss.data[0]
+                running_loss += loss.item()
             sys.stderr.flush()
             print('Loss: %.16f' % (running_loss / len(self.train_loader)))
             sys.stdout.flush()
-            accuracy = self.evaluate(net)[0]
+            mean_acc = self.evaluate(net)[0]
             sys.stderr.flush()
             print("Accuracy: %f" % mean_acc)
 
@@ -91,11 +91,11 @@ class Trainer(object):
         predictions = torch.cat(predictions, dim=0).cpu().numpy()
         gts = torch.cat(gts, dim=0).numpy()
 
-        accuracy = (predictions == gts).sum() / float(len(gts))
-        P, R, F1, _ = precision_recall_fscore_support(gts, predictions)
+        mean_acc = (predictions == gts).sum() / float(len(gts))
         conf_mat = confusion_matrix(gts, predictions)
-
-        return accuracy, P, R, F1, conf_mat
+        acc = conf_mat.diagonal()
+        P, R, F1, _ = precision_recall_fscore_support(gts, predictions)
+        return mean_acc, acc, P, R, F1, conf_mat
 
     def __call__(self, *args, **kwargs):
         tr_percs = kwargs.pop('tr_percs', [0.02, 0.05, 0.1])
@@ -121,10 +121,10 @@ class Trainer(object):
                     trained_net = self.train(model, net_name, lab_path, epochs, lr=lr, batch_size=batch_size)
 
                     model.load_state_dict(torch.load(trained_net))
-                    accuracy, P, R, F1, conf_mat = self.evaluate(model)
+                    mean_acc, acc, P, R, F1, conf_mat = self.evaluate(model)
 
                     with open(osp.join(res_model_dir, 'res_{}_{}.txt'.format(alg, tr_perc)), 'w') as res:
-                        res.write('ACC,P,R,F1\n')
-                        res.write('{},{},{},{}\n'.format(accuracy, P, R, F1))
+                        res.write('mACC,ACC,P,R,F1\n')
+                        res.write('{},{},{},{},{}\n'.format(mean_acc, acc, P, R, F1))
 
                     np.savetxt(osp.join(res_model_dir, 'conf_mat_{}_{}.txt'.format(alg, tr_perc)), conf_mat)

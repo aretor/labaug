@@ -31,8 +31,7 @@ def init_rand_probability(labels, labeled, unlabeled):
     return labels_one_hot
 
 
-def create_relabeled_file(fnames, new_file, labels, sep=' ',
-                          replace_labels=False, sep_replace=None):
+def create_relabeled_file(fnames, new_file, labels, sep=' ', replace_labels=False, sep_replace=None):
     """ Generate a file containing a labeling of a dataset. Each line of the
         contains a path to am object and its class provided as an hard or soft
         label.
@@ -55,7 +54,7 @@ def create_relabeled_file(fnames, new_file, labels, sep=' ',
     if replace_labels and not sep_replace:
         sep_replace = sep
 
-    if isinstance(fnames, file):
+    if osp.isfile(fnames):
         fnames = list(fnames.open('r'))
 
     with open(new_file, 'w') as fw:
@@ -70,7 +69,7 @@ def create_relabeled_file(fnames, new_file, labels, sep=' ',
                 np.savetxt(fw, lab, newline=' ')
                 fw.write('\n')
 
-    if isinstance(fnames, file):
+    if osp.isfile(fnames):
         fnames.close()
 
 
@@ -123,17 +122,14 @@ class Augmenter(object):
                     print(net_name + ' - ' + str(self.dset['nr_classes']) + ' classes')
 
                     # generate alg label file name
-                    alg_path = osp.join(self.label_dir, alg, net_name,
-                                        'labels_{}.txt'.format(tr_perc))
+                    alg_path = osp.join(self.label_dir, alg, net_name, 'labels_{}.txt'.format(tr_perc))
 
                     if self.hard_labels:
                         alg_labels = np.full(labels.shape[0], -1)
                         alg_labels[labeled] = labels[labeled]
                     else:
-                        alg_labels = np.zeros((len(labels),
-                                               self.dset['nr_classes']))
-                        alg_labels[
-                            labeled, labels[labeled].ravel().astype(int)] = 1.0
+                        alg_labels = np.zeros((len(labels), self.dset['nr_classes']))
+                        alg_labels[labeled, labels[labeled].ravel().astype(int)] = 1.0
 
                     if alg == 'gtg':
                         # predict labels with gtg
@@ -141,8 +137,7 @@ class Augmenter(object):
                             W = gtg.sim_mat(features, verbose=True)
 
                         ps = init_rand_probability(labels, labeled, unlabeled)
-                        res = gtg.gtg(W, ps, max_iter=max_iter, labels=labels,
-                                      U=unlabeled, L=labeled)
+                        res = gtg.gtg(W, ps, max_iter=max_iter, labels=labels, U=unlabeled, L=labeled)
 
                         if self.hard_labels:
                             alg_labels[unlabeled] = res[unlabeled].argmax(axis=1)
@@ -157,13 +152,11 @@ class Augmenter(object):
                             lin_svm.fit(features[labeled, :], labels[labeled])
                             svm_labels = lin_svm.predict(features[unlabeled]).astype(int)
                         else:
-                            cv = min(np.unique(labels[labeled],
-                                               return_counts=True)[1].min(), 3)
+                            cv = min(np.unique(labels[labeled], return_counts=True)[1].min(), 3)
                             clf = CalibratedClassifierCV(lin_svm, cv=cv)
                             clf.fit(features[labeled, :], labels[labeled])
 
-                            svm_labels = clf.predict_proba(
-                                features[unlabeled])
+                            svm_labels = clf.predict_proba(features[unlabeled])
 
                         alg_labels[unlabeled] = svm_labels
 
@@ -175,14 +168,10 @@ class Augmenter(object):
                             os.makedirs(osp.dirname(alg_path))
 
                         if (self.hard_labels and (alg_labels == -1).sum() > 0) or \
-                                (not self.hard_labels and (alg_labels.sum(
-                                    axis=1) == 0.).sum() > 0):
-                            raise ValueError(
-                                'There is some unlabeled observation,'
-                                'check \'' + alg + '\' algorithm,')
+                                (not self.hard_labels and (alg_labels.sum(axis=1) == 0.).sum() > 0):
+                            raise ValueError('There is some unlabeled observation, check \'' + alg + '\' algorithm,')
 
-                        create_relabeled_file([fnames[i] for i in labeled],
-                                              alg_path, alg_labels, sep=',')
+                        create_relabeled_file([fnames[i] for i in labeled], alg_path, alg_labels, sep=',')
                         break
                     else:
                         raise ValueError('algorithm \'' + alg + '\' not recognized.')

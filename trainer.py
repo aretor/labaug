@@ -39,7 +39,7 @@ class Trainer(object):
                                            sep=',', hard_labels=self.hard_labels)
 
         self.test_loader = prepare_loader(ts_lab_path, '', self.dset['stats'], batch_size, shuffle=False,
-                                          sep=',', hard_labels=self.hard_labels)
+                                          sep=',', hard_labels=True)
 
         print("\nValidating results in: start")
         sys.stdout.flush()

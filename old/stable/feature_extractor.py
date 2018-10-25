@@ -15,7 +15,7 @@ def get_net_info(net_processed_name, number_of_classes, nets_and_features):
 def one_hot(labels, number_of_classes):
     len_ = 1 if isinstance(labels, int) else len(labels)
     label_one_hot = torch.zeros(len_, number_of_classes)
-    label_one_hot[list(xrange(len_)), labels] = 1.
+    label_one_hot[list(range(len_)), labels] = 1.
     return label_one_hot
 
 

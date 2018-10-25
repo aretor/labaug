@@ -119,9 +119,10 @@ class Trainer(object):
 
                     model.load_state_dict(torch.load(trained_net))
                     mean_acc, acc, P, R, F1, conf_mat = self.evaluate(model)
+                    mean_P, mean_R, mean_F1 = np.mean(P), np.mean(R), np.mean(F1)
 
                     with open(osp.join(res_model_dir, 'res_{}_{}.txt'.format(alg, tr_perc)), 'w') as res:
-                        res.write('mACC,ACC,P,R,F1\n')
-                        res.write('{},{},{},{},{}\n'.format(mean_acc, acc, P, R, F1))
+                        res.write('mACC, mP, mR, mF1, ACC, P, R, F1\n')
+                        res.write('{},{},{},{}\n,{}\n,{}\n,{}\n,{}\n'.format(mean_acc, mean_P, mean_R, mean_F1, acc, P, R, F1))
 
                     np.savetxt(osp.join(res_model_dir, 'conf_mat_{}_{}.txt'.format(alg, tr_perc)), conf_mat)

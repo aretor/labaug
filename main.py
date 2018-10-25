@@ -23,9 +23,9 @@ class Experiment(object):
         dset_dir = osp.join(self.exp_dir, dset_name)
         self.splitting_dir = osp.join(dset_dir, cfg.SPLITTING_DIR)
         self.feat_dir = osp.join(dset_dir, cfg.FEATURE_DIR)
-        self.label_dir = osp.join(dset_dir, cfg.LABEL_DIR)
-        self.net_dir = osp.join(dset_dir, cfg.NET_DIR)
-        self.res_dir = osp.join(dset_dir, cfg.RESULT_DIR)
+        self.label_dir = osp.join(dset_dir, cfg.LABEL_DIR, 'hard' if hard_labels else 'soft')
+        self.net_dir = osp.join(dset_dir, cfg.NET_DIR, 'hard' if hard_labels else 'soft')
+        self.res_dir = osp.join(dset_dir, cfg.RESULT_DIR, 'hard' if hard_labels else 'soft')
 
         self.dset = cfg.DSETS[dset_name]
 
@@ -70,15 +70,15 @@ class Experiment(object):
 if __name__ == '__main__':
     dset_name = 'caltech'
     steps = [
-             # 'splitter',
-             # 'extractor',
-             # 'augmenter',
+             'splitter',
+             'extractor',
+             'augmenter',
              'trainer'
     ]
 
-    exp = Experiment(dset_name, net_names=['resnet18'], hard_labels=False, exp=2, device='cuda:0')
+    exp = Experiment(dset_name, net_names=['resnet18'], hard_labels=False, exp=4, device='cuda:0')
     exp.run(steps=steps, seed=314, tr_frac=0.8, exts=['.jpg', 'jpeg', '.png'],
-            tr_percs=[0.05], algs=['svm'], epochs=10, batch_size_tr=64)
+            tr_percs=[0.05], algs=['gtg'], epochs=10, batch_size_tr=64, soft_labels=True)
     # exp = Experiment(dset_name, net_names=['resnet18'], hard_labels=True, device='cuda:0', exp=1)
     # exp.run(steps=steps, seed=314, tr_frac=0.8, exts=['.jpg', 'jpeg', '.png'],
     #         tr_percs=[0.05], algs=['gtg', 'svm', 'labels_only'], epochs=10, batch_size_tr=64,)

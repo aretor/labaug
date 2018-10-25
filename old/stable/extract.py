@@ -25,7 +25,7 @@ def main():
     dset_src, stats, nr_classes = dataset['src'], dataset['stats'], dataset[
         'nr_classes']
 
-    for exp in xrange(cfg.NUM_EXPS):
+    for exp in range(cfg.NUM_EXPS):
         for set_ in ('train', 'test'):
             set_pname = osp.join(cfg.DATA_DIR, dset_name, cfg.SPLITTING_DIR,
                                  set_ + '_' + str(exp) + '.txt')

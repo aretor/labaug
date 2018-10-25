@@ -68,7 +68,7 @@ def gen_tr_ts_files(dset_name, tr_frac=0.7, n=1, exts=None):
 def split(dataset_name, tr_perc, n=1):
     source = osp.join(root, dataset_name)
 
-    for i in xrange(n):
+    for i in range(n):
         for folder in os.listdir(source):
             source_folder = osp.join(source, folder)
             train_folder = osp.join(root, 'caltech', 'train_' + str(i), folder)

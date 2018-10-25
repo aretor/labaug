@@ -26,7 +26,6 @@ def get_accuracy(P_new, labels, unlabelled):
     conf = sklearn.metrics.confusion_matrix(labels[unlabelled, :].argmax(axis=1), (P_new[unlabelled, :]).argmax(axis=1))
     return float(conf.trace()) / float(conf.sum())
 
-
 # def gtg(W, X, max_iter=100, labels=None, U=None):
 #     iter = 0
 #

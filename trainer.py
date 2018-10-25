@@ -35,15 +35,14 @@ class Trainer(object):
         if not self.hard_labels:
             logsoftmax = torch.nn.LogSoftmax(dim=1)
 
-        self.train_loader = prepare_loader(lab_path, '', self.dset['stats'], batch_size, shuffle=True,
-                                           sep=',', hard_labels=self.hard_labels)
+        self.train_loader = prepare_loader(lab_path, img_root='', stats=self.dset['stats'], batch_size=batch_size,
+                                           shuffle=True, sep=',', hard_labels=self.hard_labels)
 
-        self.test_loader = prepare_loader(ts_lab_path, '', self.dset['stats'], batch_size, shuffle=False,
-                                          sep=',', hard_labels=True)
+        self.test_loader = prepare_loader(ts_lab_path, img_root='', stats=self.dset['stats'], batch_size=batch_size,
+                                          shuffle=False, sep=',', hard_labels=True)
 
         sys.stdout.flush()
         mean_acc = self.evaluate(net)[0]
-        sys.stderr.flush()
         print('Accuracy: %f' % mean_acc)
 
         for epoch in range(epochs):
@@ -67,11 +66,9 @@ class Trainer(object):
 
                 # print statistics
                 running_loss += loss.item()
-            sys.stderr.flush()
             print('Loss: %.16f' % (running_loss / len(self.train_loader)))
             sys.stdout.flush()
             mean_acc = self.evaluate(net)[0]
-            sys.stderr.flush()
             print("Accuracy: %f" % mean_acc)
 
             torch.save(net.state_dict(), net_name)

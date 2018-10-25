@@ -1,3 +1,6 @@
+import torch.utils.data
+
+import os.path as osp
 import torch
 import torchvision
 import torch.nn as nn
@@ -5,6 +8,24 @@ import torch.utils.data
 
 import config as cfg
 from file_folder import FileImageFolder
+
+
+def soft2hard(src, dst=None, sep=','):
+    """ Convert a soft-label file into a hard-label one.
+
+        Inputs:
+        src: the source file path
+        dst: the destination directory path
+        sep: separator to separe between path and labels in the source file (default: ,)
+    """
+    if dst is None:
+        dst = osp.dirname(src)
+
+    with open(src, 'r') as src_f,\
+         open(dst, 'w') as dst_f:
+        for line in src_f:
+            path, soft_lab = line.split(sep)
+            dst_f.write(osp.join(path, torch.max(torch.Tensor([float(l) for l in soft_lab.rstrip().split(' ')]))[1]))
 
 
 def get_finetune_model(net, nr_classes):
@@ -34,6 +55,5 @@ def prepare_loader(dataset_path, img_root, stats, batch_size, shuffle, sep='', h
 
     fif = FileImageFolder(dataset_path, root=img_root, transform=transform, sep=sep, hard_labels=hard_labels,
                           target_transform=target_transform)
-    loader = torch.utils.data.DataLoader(fif, batch_size=batch_size, shuffle=shuffle, num_workers=12,
-                                             pin_memory=True)
+    loader = torch.utils.data.DataLoader(fif, batch_size=batch_size, shuffle=shuffle, num_workers=12, pin_memory=True)
     return loader

@@ -22,6 +22,13 @@ class PathImageFolder(torchvision.datasets.ImageFolder):
 
 
 class FileImageFolder(torchvision.datasets.ImageFolder):
+    def _is_int_convertible(self, x):
+        try:
+            int(x)
+            return True
+        except ValueError:
+            return False
+
     def __init__(self, source_file, sep=' ', root='', transform=None,
                  target_transform=None, loader=folder.default_loader,
                  hard_labels=True):
@@ -30,16 +37,19 @@ class FileImageFolder(torchvision.datasets.ImageFolder):
 
         paths = [osp.join(root, fname.split(',')[0].rstrip()) for fname in fnames]
         if len(fnames[0].split(',')) == 2:
-            self.classes = [fname.split(sep)[1] for fname in fnames]
+            # The file contains already labels and we assume are integers
+            self.classes = [fname.split(sep)[1].rstrip() for fname in fnames]
+            if hard_labels and self._is_int_convertible(self.classes[0]):
+                self.classes = [int(cls) for cls in self.classes]
         else:
             self.classes = [fname.split('/')[0] for fname in fnames]
 
         if hard_labels:
             self.class_to_idx = {class_: idx for idx, class_ in enumerate(sorted(set(self.classes)))}
             self.idx_to_class = {class_: self.class_to_idx[class_] for class_ in self.class_to_idx.keys()}
-            self.imgs = list(zip(paths, [self.class_to_idx[class_] for class_ in self.classes]))
+            self.samples = list(zip(paths, [self.class_to_idx[class_] for class_ in self.classes]))
         else:
-            self.imgs = list(zip(paths, self.classes))
+            self.samples = list(zip(paths, self.classes))
 
         self.transform = transform
         self.target_transform = target_transform
@@ -49,5 +59,5 @@ class FileImageFolder(torchvision.datasets.ImageFolder):
 
     def __getitem__(self, index):
         img, target = super(FileImageFolder, self).__getitem__(index)
-        path = self.imgs[index][0]
+        path = self.samples[index][0]
         return img, target, path

@@ -27,25 +27,44 @@ def get_accuracy(P_new, labels, unlabelled):
     return float(conf.trace()) / float(conf.sum())
 
 
-# def gtg(W, X, max_iter=100, labels=None, U=None):
-#     iter = 0
+# def gtg(W, X, tol, max_iter, labels, L, U):
+#     """
+#     Replicator Dynamics
 #
-#     while iter < max_iter:
-#         tmp = X * np.dot(W, X)
-#         X = tmp / tmp.sum(axis=1)[:, np.newaxis]
-#         iter += 1
-#         if labels is not None and U is not None:
-#             # conf = sklearn.metrics.confusion_matrix(labels[U, :], (X[U, :]).argmax(axis=1))
+#     Output:
+#     X:  the population(s) at convergence
+#     i:  the number of iterations needed to converge
+#     prec:  the precision reached by the dynamical system
+#     """
+#
+#     err = 2. * tol
+#     i = 0
+#     while err > tol and i < max_iter:
+#         X_old = X
+#         X = X * np.dot(W, X)
+#         X /= X.sum(axis=1).unsqueeze(1)
+#
+#         err = np.linalg.norm(X - X_old)
+#         i += 1
+#
+#         # checking step-by-step accuracy
+#         if not labels is None:
 #             conf = sklearn.metrics.confusion_matrix(labels[U], (X[U, :]).argmax(axis=1))
 #             acc = float(conf.trace()) / conf.sum()
-#             print('Accuracy at iter ' + str(iter) + ': ' + str(acc))
+#             print('Accuracy at iter {}: {}'.format(i, acc))
 #
-#     return X
+#     if i == max_iter:
+#         import warnings
+#         warnings.warn("Maximum number of iterations reached.")
+#
+#     return X, i, err
 
 
-def gtg(W, X, L, U, max_iter=100, labels=None):
+def gtg(W, X, L, U, max_iter=10, labels=None):
     iter = 0
     Xbin = X[L, :] > 0.0
+    # if (not labels is None) and len(labels.shape) == 1:
+    #     labels = one_hot(labels, labels.max() + 1)
 
     while iter < max_iter:
         q = ((X * np.dot(W[:, U], X[U, :])) + (X * np.dot(W[:, L], Xbin))).sum(axis=1)
@@ -55,37 +74,13 @@ def gtg(W, X, L, U, max_iter=100, labels=None):
 
         # checking step-by-step accuracy
         if (not labels is None):
-            # conf = sklearn.metrics.confusion_matrix(labels[U, :], (X[U, :]).argmax(axis=1))
-            conf = sklearn.metrics.confusion_matrix(labels[U], (X[U, :]).argmax(axis=1))
+            conf = sklearn.metrics.confusion_matrix(labels[U, :], (X[U, :]).argmax(axis=1))
             acc = float(conf.trace()) / conf.sum()
             print('Accuracy at iter ' + str(iter) + ': ' + str(acc))
 
         iter += 1
 
     return X
-
-
-# def gtg(W, X, L, U, max_iter=10, labels=None):
-#     iter = 0
-#     Xbin = X[L, :] > 0.0
-#     # if (not labels is None) and len(labels.shape) == 1:
-#     #     labels = one_hot(labels, labels.max() + 1)
-#
-#     while iter < max_iter:
-#         q = ((X * np.dot(W[:, U], X[U, :])) + (X * np.dot(W[:, L], Xbin))).sum(axis=1)
-#         u = (np.dot(W[:, U], X[U, :]) + (np.dot(W[:, L], Xbin)))/q[:, np.newaxis]
-#         # DO not do in-place multiplication!
-#         X = X * u
-#
-#         # checking step-by-step accuracy
-#         if (not labels is None):
-#             conf = sklearn.metrics.confusion_matrix(labels[U, :], (X[U, :]).argmax(axis=1))
-#             acc = float(conf.trace()) / conf.sum()
-#             print('Accuracy at iter ' + str(iter) + ': ' + str(acc))
-#
-#         iter += 1
-#
-#     return X
 
 
 def sim_mat(fc7_feats, mode=0, verbose=False):

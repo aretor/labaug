@@ -5,6 +5,8 @@ import pickle
 import numpy as np
 from sklearn import svm
 from sklearn.calibration import CalibratedClassifierCV
+from sklearn.semi_supervised import LabelSpreading
+from sklearn.semi_supervised import LabelPropagation
 
 import gtg
 from extract_tools import prepare_loader
@@ -154,6 +156,30 @@ class Augmenter(object):
 
                         alg_labels[unlabeled] = svm_labels
 
+                    elif alg == 'label_propagation':
+                        # predict labels with a label propagation model
+                        label_propagation = LabelPropagation(kernel='rbf', gamma=0.05, max_iter=4000)
+                        labels[unlabeled] = -1
+                        label_propagation.fit(features, labels)
+                        if self.hard_labels:
+                            label_propagation_labels = label_propagation.predict(features[unlabeled]).astype(int)
+                        else:
+                            label_propagation_labels = label_propagation.predict_proba(features[unlabeled])
+                        
+                        alg_labels[unlabeled] = label_propagation_labels
+                    
+                    elif alg == 'label_spreading':
+                        # predict labels with a label propagation model
+                        label_spreading = LabelSpreading(kernel='rbf', gamma=0.05)
+                        labels[unlabeled] = -1
+                        label_spreading.fit(features, labels)
+                        if self.hard_labels:
+                            label_spreading_labels = label_spreading.predict(features[unlabeled]).astype(int)
+                        else:
+                            label_spreading_labels = label_spreading.predict_proba(features[unlabeled])
+
+                        alg_labels[unlabeled] = label_spreading_labels
+    
                     elif alg == 'labels_only':
                         # generate labeled only file
                         alg_labels = alg_labels[labeled]

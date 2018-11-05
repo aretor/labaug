@@ -7,6 +7,7 @@ from sklearn import svm
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.semi_supervised import LabelSpreading
 from sklearn.semi_supervised import LabelPropagation
+from harmonic import harmonic_function
 
 import gtg
 from extract_tools import prepare_loader
@@ -179,6 +180,17 @@ class Augmenter(object):
                             label_spreading_labels = label_spreading.predict_proba(features[unlabeled])
 
                         alg_labels[unlabeled] = label_spreading_labels
+
+                    elif alg == 'harmonic':
+                        if 'W' not in locals():
+                            W = gtg.sim_mat(features, verbose=True)
+                        soft_labels, hard_labels =  harmonic_function(W, labels, labeled, unlabeled)
+                        if self.hard_labels:
+                            label_harmonic = hard_labels
+                        else:
+                            label_harmonic = soft_labels
+                        
+                        alg_labels[unlabeled] = label_harmonic
     
                     elif alg == 'labels_only':
                         # generate labeled only file
